@@ -1,0 +1,171 @@
+metadata: 
+  title: |
+    Profile
+  short title: |
+    Thanks
+  show login: True
+  allow registration: False
+  exit url: "http://lexyalgo.com/"
+  exit link: logout
+  exit label: |
+    Exit
+---
+metadata:
+  temporary session: True
+  hidden: True
+---
+modules:
+  - .read_data
+---
+features:
+  css: buttons.css
+  labels above fields: True
+  navigation back button: False
+  question back button: True
+---
+objects:
+  - profile: DAGlobal.using(key='profile')
+  - profile.user: Individual
+  - profile.preferences: DADict
+  - company_logo: DAStaticFile.using(filename='logo.png')
+---
+mandatory: True
+code: |
+  set_parts(logo='<img src="' + company_logo.url_for() + '" style="height: 50px;">')
+---
+initial: True
+code: |
+  if not user_logged_in():
+    command('leave', url='https://doc.lexyalgo.com/interview?i=docassemble.playground3QDRO:signIn_signUp.yml')  
+---
+initial: True 
+code: |
+  if 'id' in url_args:
+    origin_of_interviewee = url_args['id']
+  else:
+    origin_of_interviewee = 'unknown'
+---
+mandatory: True
+code: |
+  menu_items = [ {'url': 'https://doc.lexyalgo.com/interview?i=docassemble.playground3QDRO:dashboard.yml', 'label': 'Dashboard'} ]
+  register_data = display_register_data(origin_of_interviewee)
+  data_from_registration = reg()
+  multi_user = True
+  screen = {item: True for item in ['name', 'address', 'preferences']}
+  user_data1 = [{
+    'profile.user.name.first': user_info().first_name,
+    'profile.user.name.middle': data_from_registration[0]['user.name.middle'] if len(data_from_registration) > 0 and 'user.name.middle' in data_from_registration[0] else '',
+    'profile.user.name.last': register_data[0]['last_name'] if len(register_data) > 0 else '',
+    'profile.user.address.address': data_from_registration[0]['user.address.address'] if len(data_from_registration) > 0 and 'user.address.address' in data_from_registration[0] else '',
+    'profile.user.address.unit': data_from_registration[0]['user.address.unit'] if len(data_from_registration) > 0 and 'user.address.unit' in data_from_registration[0] else '',
+    'profile.user.address.city': data_from_registration[0]['user.address.city'] if len(data_from_registration) > 0 and 'user.address.city' in data_from_registration[0] else '',
+    'profile.user.address.state': data_from_registration[0]['user.address.state'] if len(data_from_registration) > 0 and 'user.address.state' in data_from_registration[0] else '',
+    'profile.user.address.zip': data_from_registration[0]['user.address.zip_code'] if len(data_from_registration) > 0 and 'user.address.zip_code' in data_from_registration[0] else '',
+    'profile.preferences.bar_number': data_from_registration[0]['bar_number'] if len(data_from_registration) > 0 and 'bar_number' in data_from_registration[0] else '',
+    }]
+---
+initial: true
+code: |
+  jsond = {
+    'user.name.first':profile.user.name.first,
+    'user.name.middle':profile.user.name.middle,
+    'user.name.last':profile.user.name.last,
+    'user.address.address':profile.user.address.address,
+    'user.address.unit':profile.user.address.unit,
+    'user.address.city':profile.user.address.city,
+    'user.address.state':profile.user.address.state,
+    'user.address.zip_code':profile.user.address.zip,
+    'bar_number':profile.preferences.bar_number,
+    'user_type':data_from_registration[0]['user_type'] if 'user_type' in data_from_registration[0] else '',
+    'phone_number':data_from_registration[0]['phone_number'] if 'phone_number' in data_from_registration[0] else '',
+    'dob':data_from_registration[0]['dob'] if 'dob' in data_from_registration[0] else '',
+    }
+  user_data = update_profile(jsond)
+  user_data = update_profile1(jsond)
+
+
+
+---
+ga id: profile_page
+mandatory: True
+field: profile_page
+question: |
+  Edit your profile 
+review:
+  - label: Edit
+    field: screen['name']
+    button: |
+      #### Name
+  - label: Edit
+    field: screen['address']
+    button: |
+      #### Address
+  - label: Edit
+    fields: screen['preferences']
+    button: |
+      #### Bar Number
+
+skip undefined: False
+---
+ga id: profile_user_name
+question: |
+  Your name 
+fields:
+  - First name: profile.user.name.first
+    default: |
+      ${ user_data1[0]['profile.user.name.first'] }
+  - Middle name: profile.user.name.middle
+    default: |
+      ${ user_data1[0]['profile.user.name.middle'] }
+    required: False
+  - Last name: profile.user.name.last
+    default: |
+      ${ user_data1[0]['profile.user.name.last'] }
+continue button field: screen['name']
+
+---
+ga id: profile_user_address
+question: |
+  Your address
+fields:
+  - Address: profile.user.address.address
+    default: |
+      ${ user_data1[0]['profile.user.address.address'] }
+    address autocomplete: True
+  - Unit: profile.user.address.unit
+    default: |
+      ${ user_data1[0]['profile.user.address.unit'] }
+    required: False
+  - City: profile.user.address.city
+    default: |
+      ${ user_data1[0]['profile.user.address.city'] }
+  - State: profile.user.address.state
+    default: |
+      ${ user_data1[0]['profile.user.address.state'] }
+    code: |
+      states_list()
+  - Zip: profile.user.address.zip
+    default: |
+      ${ user_data1[0]['profile.user.address.zip'] }
+continue button field: screen['address']
+---
+ga id: profile_bar_number
+question: |
+  Bar Number
+fields:
+  - Bar Number: profile.preferences.bar_number
+    default: |
+      ${ user_data1[0]['profile.preferences.bar_number'] }
+continue button field: screen['preferences']
+---
+ga id: profile_final_page
+mandatory: True
+event: final
+question: |
+  You have successfully edited your profile detalis. ${ update_profile(jsond) }
+subquestion: |
+  Click on the below button to go to Dashboard screen.
+action buttons:
+  - label: Dashboard
+    action: 'https://doc.lexyalgo.com/interview?i=docassemble.playground3QDRO:dashboard.yml'
+    color: link
